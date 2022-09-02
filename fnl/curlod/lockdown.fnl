@@ -1,6 +1,7 @@
 (module curlod.lockdown
   {autoload {a curlod.aniseed.core
              bridge curlod.bridge
+             log curlod.log
              nvim curlod.aniseed.nvim}})
 
 (defn- last-line-num []
@@ -37,7 +38,7 @@
   (when (active-in-buf?)
     (let [[start end] nvim.w.curlod-region
           [cur-line cur-col] (nvim.win_get_cursor 0)]
-      ;;(print ">>>" start end cur-line cur-col)
+      (log.debug_ ">>>" start end cur-line cur-col)
       (if
         (< cur-line start) (nvim.win_set_cursor 0 [start cur-col])
         (> cur-line end) (nvim.win_set_cursor 0 [end cur-col])))))
@@ -46,7 +47,7 @@
   (let [start (resolve-line-num start)]
     (if (a.nil? start)
       (do
-        (a.println "Couldn't determine region start line. Using line 1.")
+        (log.error_ "Couldn't determine region start line. Using line 1.")
         1)
       start)))
 
@@ -54,7 +55,7 @@
   (let [end (resolve-line-num end)]
     (if (a.nil? end)
       (do
-        (a.println "Couldn't determine region end line. Using last line.")
+        (log.error_ "Couldn't determine region end line. Using last line.")
         (last-line-num))
       end)))
 
@@ -65,7 +66,7 @@
     (set nvim.w.curlod-active true)
     (set nvim.w.curlod-region [start end])
 
-    (a.println "Locked cursor down between lines" start "and" end)
+    (log.info_ "Locked cursor down between lines" start "and" end)
 
     (nvim.ex.augroup :curlod)
     (nvim.ex.autocmd_)
