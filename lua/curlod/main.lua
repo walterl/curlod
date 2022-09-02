@@ -10,8 +10,13 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
+local autoload = (require("curlod.aniseed.autoload")).autoload
+local bridge, nvim = autoload("curlod.bridge"), autoload("curlod.aniseed.nvim")
+do end (_2amodule_locals_2a)["bridge"] = bridge
+_2amodule_locals_2a["nvim"] = nvim
 local function init()
-  return print("Hello, World!")
+  nvim.ex.command_(("-nargs=* " .. "CurlodEnable"), bridge["viml->lua"]("curlod.lockdown", "enable", {args = "<f-args>"}))
+  return nvim.ex.command_("CurlodDisable", bridge["viml->lua"]("curlod.lockdown", "disable"))
 end
 _2amodule_2a["init"] = init
 return _2amodule_2a
