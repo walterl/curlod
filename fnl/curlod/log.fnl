@@ -2,7 +2,7 @@
   {autoload {a curlod.aniseed.core
              nvim curlod.aniseed.nvim}})
 
-(set _G.current-level :info)
+(set _G.curlod-log-level :info)
 
 (defn- println-debug [...]
   (a.println "[DEBUG]" ...))
@@ -31,7 +31,7 @@
 
 (defn- log [level ...]
   (let [idx (level-idx level)]
-    (when (<= idx (level-idx _G.current-level))
+    (when (<= (level-idx _G.curlod-log-level) idx)
       (let [f (a.second (a.get levels idx))]
         (f ...)))))
 
@@ -46,7 +46,7 @@
 
 (defn set-level [level]
   (if (valid-level? level)
-    (set _G.current-level level)
+    (set _G.curlod-log-level level)
     (log :error "Invalid log level: " level)))
 
 (comment

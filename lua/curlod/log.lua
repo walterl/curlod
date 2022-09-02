@@ -14,7 +14,7 @@ local autoload = (require("curlod.aniseed.autoload")).autoload
 local a, nvim = autoload("curlod.aniseed.core"), autoload("curlod.aniseed.nvim")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["nvim"] = nvim
-_G["current-level"] = "info"
+_G["curlod-log-level"] = "info"
 local function println_debug(...)
   return a.println("[DEBUG]", ...)
 end
@@ -50,7 +50,7 @@ end
 _2amodule_locals_2a["level-idx"] = level_idx
 local function log(level, ...)
   local idx = level_idx(level)
-  if (idx <= level_idx(_G["current-level"])) then
+  if (level_idx(_G["curlod-log-level"]) <= idx) then
     local f = a.second(a.get(levels, idx))
     return f(...)
   else
@@ -72,7 +72,7 @@ end
 _2amodule_2a["error_"] = error_
 local function set_level(level)
   if valid_level_3f(level) then
-    _G["current-level"] = level
+    _G["curlod-log-level"] = level
     return nil
   else
     return log("error", "Invalid log level: ", level)
