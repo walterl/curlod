@@ -146,11 +146,14 @@ _2amodule_2a["set-region!"] = set_region_21
 local function on_text_change()
   if active_in_buf_3f() then
     local _let_16_ = nvim.w["curlod-input-region"]
-    local old_start = _let_16_[1]
-    local old_end = _let_16_[2]
-    local _let_17_ = smallest_first(region_start(old_start), region_end(old_end))
-    local start = _let_17_[1]
-    local _end = _let_17_[2]
+    local in_start = _let_16_[1]
+    local in_end = _let_16_[2]
+    local _let_17_ = (nvim.w["curlod-region"] or {-1, -1})
+    local old_start = _let_17_[1]
+    local old_end = _let_17_[2]
+    local _let_18_ = smallest_first(region_start(in_start), region_end(in_end))
+    local start = _let_18_[1]
+    local _end = _let_18_[2]
     if ((old_start ~= start) or (old_end ~= _end)) then
       log.debug_("New region:", {start, _end})
       return set_region_21(start, _end)
@@ -167,9 +170,9 @@ local function enable(start, _end)
   nvim.w["curlod-input-region"] = {start, _end}
   on_text_change()
   do
-    local _let_20_ = nvim.w["curlod-region"]
-    local start0 = _let_20_[1]
-    local _end0 = _let_20_[2]
+    local _let_21_ = nvim.w["curlod-region"]
+    local start0 = _let_21_[1]
+    local _end0 = _let_21_[2]
     log.info_("Locked cursor down between lines", start0, "and", _end0)
   end
   nvim.ex.augroup("curlod")
@@ -185,6 +188,14 @@ local function enable(start, _end)
   return on_cursor_move()
 end
 _2amodule_2a["enable"] = enable
+local function enable_range(start, _end)
+  if (start == _end) then
+    return log.error_("Visual selection of a single line is too small. Select bigger range for Curlod.")
+  else
+    return enable(start, _end)
+  end
+end
+_2amodule_2a["enable-range"] = enable_range
 local function disable()
   nvim.w["curlod-active"] = false
   nvim.w["curlod-region"] = nil
@@ -194,27 +205,27 @@ local function disable()
   return reset_highlighting_21()
 end
 _2amodule_2a["disable"] = disable
-local function cursor_in_region_3f(_21_, _23_)
-  local _arg_22_ = _21_
-  local cur_line = _arg_22_[1]
-  local _ = _arg_22_[2]
+local function cursor_in_region_3f(_23_, _25_)
   local _arg_24_ = _23_
-  local start_line = _arg_24_[1]
-  local end_line = _arg_24_[2]
-  return (function(_25_,_26_,_27_) return (_25_ <= _26_) and (_26_ <= _27_) end)(start_line,cur_line,end_line)
+  local cur_line = _arg_24_[1]
+  local _ = _arg_24_[2]
+  local _arg_26_ = _25_
+  local start_line = _arg_26_[1]
+  local end_line = _arg_26_[2]
+  return (function(_27_,_28_,_29_) return (_27_ <= _28_) and (_28_ <= _29_) end)(start_line,cur_line,end_line)
 end
 _2amodule_locals_2a["cursor-in-region?"] = cursor_in_region_3f
-local function cursor_at_any_pos_3f(_28_, positions)
-  local _arg_29_ = _28_
-  local cur_line = _arg_29_[1]
-  local cur_col = _arg_29_[2]
-  local function _32_(_30_)
-    local _arg_31_ = _30_
-    local l = _arg_31_[1]
-    local c = _arg_31_[2]
+local function cursor_at_any_pos_3f(_30_, positions)
+  local _arg_31_ = _30_
+  local cur_line = _arg_31_[1]
+  local cur_col = _arg_31_[2]
+  local function _34_(_32_)
+    local _arg_33_ = _32_
+    local l = _arg_33_[1]
+    local c = _arg_33_[2]
     return ((cur_line == l) and (cur_col == c))
   end
-  return not a["nil?"](a.some(_32_, positions))
+  return not a["nil?"](a.some(_34_, positions))
 end
 _2amodule_locals_2a["cursor-at-any-pos?"] = cursor_at_any_pos_3f
 local function region_search(next_cmd)

@@ -93,8 +93,9 @@
 
 (defn on-text-change []
   (when (active-in-buf?)
-    (let [[old-start old-end] nvim.w.curlod-input-region
-          [start end] (smallest-first (region-start old-start) (region-end old-end))]
+    (let [[in-start in-end] nvim.w.curlod-input-region
+          [old-start old-end] (or nvim.w.curlod-region [-1 -1])
+          [start end] (smallest-first (region-start in-start) (region-end in-end))]
       (when (or (not= old-start start) (not= old-end end))
         (log.debug_ "New region:" [start end])
         (set-region! start end)))))
@@ -136,6 +137,11 @@
 
   ;; Ensure that cursor is in our lockdown region
   (on-cursor-move))
+
+(defn enable-range [start end]
+  (if (= start end)
+    (log.error_ "Visual selection of a single line is too small. Select bigger range for Curlod.")
+    (enable start end)))
 
 (defn disable []
   (set nvim.w.curlod-active false)

@@ -2,9 +2,11 @@
 
 Lock your Neovim cursor down in a specified region of lines.
 
-This is useful for having a separate, restricted view of a long document, while
-working on one part, but needing to often refer to another.
+The effect is limited to the active Neovim window, making this useful for
+having a separate, restricted view of a long document, while working on one
+part, while often referring to another part.
 
+## Usage
 This will keep the cursor in the region starting at line 20, and ending at the
 first line that starts with `END`:
 
@@ -15,7 +17,11 @@ first line that starts with `END`:
 Arguments are optional, and can be line numbers, or [Lua patterns](https://www.lua.org/pil/20.2.html) passed to
 [`string.match`](https://www.lua.org/pil/20.1.html), and wrapped in `/`s.
 
-The effect is limited to the active Neovim window.
+Alternatively, make a visual selection and run `CurlodEnableRange` on it:
+
+```vim
+:'<,'>CurlodEnableRange
+```
 
 Free your cursor again:
 
