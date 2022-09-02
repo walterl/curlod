@@ -12,7 +12,8 @@ first line that starts with `END`:
 :CurlodEnable 20 /^END/
 ```
 
-Arguments are optional, and can be line numbers, or [Lua patterns](https://www.lua.org/pil/20.2.html) passed to [`string.match`](https://www.lua.org/pil/20.1.html).
+Arguments are optional, and can be line numbers, or [Lua patterns](https://www.lua.org/pil/20.2.html) passed to
+[`string.match`](https://www.lua.org/pil/20.1.html), and wrapped in `/`s.
 
 The effect is limited to the active Neovim window.
 
@@ -26,7 +27,6 @@ Plug 'walterl/curlod'
 ```
 
 ## TODO
-- [ ] Limit searches to Curlod region
 - [ ] Highlight lines outside of Curlod region
 
 ## Known limitations
