@@ -11,9 +11,10 @@ do
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
 local autoload = (require("curlod.aniseed.autoload")).autoload
-local a, bridge, nvim = autoload("curlod.aniseed.core"), autoload("curlod.bridge"), autoload("curlod.aniseed.nvim")
+local a, bridge, log, nvim = autoload("curlod.aniseed.core"), autoload("curlod.bridge"), autoload("curlod.log"), autoload("curlod.aniseed.nvim")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["bridge"] = bridge
+_2amodule_locals_2a["log"] = log
 _2amodule_locals_2a["nvim"] = nvim
 local function last_line_num()
   return nvim.buf_line_count(0)
@@ -36,11 +37,11 @@ local function lua_pattern(s)
 end
 _2amodule_locals_2a["lua-pattern"] = lua_pattern
 local function lookup_first_line(pat)
-  local n = 0
+  local i = 0
   local function _2_(line)
-    n = a.inc(n)
+    i = a.inc(i)
     if line:match(lua_pattern(pat)) then
-      return n
+      return i
     else
       return nil
     end
@@ -66,9 +67,12 @@ local function on_cursor_move()
     local _let_6_ = nvim.win_get_cursor(0)
     local cur_line = _let_6_[1]
     local cur_col = _let_6_[2]
+    log.debug_(">>>", start, _end, cur_line, cur_col)
     if (cur_line < start) then
+      log.info_("Prevented cursor from leaving Curlod region")
       return nvim.win_set_cursor(0, {start, cur_col})
     elseif (cur_line > _end) then
+      log.info_("Prevented cursor from leaving Curlod region")
       return nvim.win_set_cursor(0, {_end, cur_col})
     else
       return nil
@@ -81,7 +85,7 @@ _2amodule_2a["on-cursor-move"] = on_cursor_move
 local function region_start(start)
   local start0 = resolve_line_num(start)
   if a["nil?"](start0) then
-    a.println("Couldn't determine region start line. Using line 1.")
+    log.error_("Couldn't determine region start line. Using line 1.")
     return 1
   else
     return start0
@@ -91,32 +95,55 @@ _2amodule_locals_2a["region-start"] = region_start
 local function region_end(_end)
   local _end0 = resolve_line_num(_end)
   if a["nil?"](_end0) then
-    a.println("Couldn't determine region end line. Using last line.")
+    log.error_("Couldn't determine region end line. Using last line.")
     return last_line_num()
   else
     return _end0
   end
 end
 _2amodule_locals_2a["region-end"] = region_end
-local function enable(start, _end)
-  local start0 = region_start(start)
-  local _end0 = region_end(_end)
-  local function _12_()
-    if (_end0 < start0) then
-      return {_end0, start0}
-    else
-      return {start0, _end0}
-    end
+local function smallest_first(a0, b)
+  if (b < a0) then
+    return {b, a0}
+  else
+    return {a0, b}
   end
-  local _let_11_ = _12_()
-  local start1 = _let_11_[1]
-  local _end1 = _let_11_[2]
+end
+_2amodule_locals_2a["smallest-first"] = smallest_first
+local function on_text_change()
+  if active_in_buf_3f() then
+    local _let_12_ = nvim.w["curlod-input-region"]
+    local old_start = _let_12_[1]
+    local old_end = _let_12_[2]
+    local _let_13_ = smallest_first(region_start(old_start), region_end(old_end))
+    local start = _let_13_[1]
+    local _end = _let_13_[2]
+    if ((old_start ~= start) or (old_end ~= _end)) then
+      log.debug_("New region:", {start, _end})
+      nvim.w["curlod-region"] = {start, _end}
+      return nil
+    else
+      return nil
+    end
+  else
+    return nil
+  end
+end
+_2amodule_2a["on-text-change"] = on_text_change
+local function enable(start, _end)
   nvim.w["curlod-active"] = true
-  nvim.w["curlod-region"] = {start1, _end1}
-  a.println("Locked cursor down between lines", start1, "and", _end1)
+  nvim.w["curlod-input-region"] = {start, _end}
+  on_text_change()
+  do
+    local _let_16_ = nvim.w["curlod-region"]
+    local start0 = _let_16_[1]
+    local _end0 = _let_16_[2]
+    log.info_("Locked cursor down between lines", start0, "and", _end0)
+  end
   nvim.ex.augroup("curlod")
   nvim.ex.autocmd_()
   nvim.ex.autocmd("CursorMoved,CursorMovedI", "<buffer>", bridge["viml->lua"]("curlod.lockdown", "on-cursor-move"))
+  nvim.ex.autocmd("TextChanged,TextChangedI,TextChangedP", "<buffer>", bridge["viml->lua"]("curlod.lockdown", "on-text-change"))
   nvim.ex.augroup("END")
   return on_cursor_move()
 end

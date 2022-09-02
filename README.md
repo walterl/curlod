@@ -23,7 +23,6 @@ Plug 'walterl/curlod'
 ```
 
 ## TODO
-- [ ] Recalculate `nvim.w.curlod-{start,end}` on buffer change
 - [ ] Limit searches to Curlod region
 - [ ] Highlight lines outside of Curlod region
 

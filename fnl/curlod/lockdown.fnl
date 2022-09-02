@@ -66,26 +66,38 @@
         (last-line-num))
       end)))
 
+(defn- smallest-first [a b]
+  (if (< b a) [b a] [a b]))
+
+(defn on-text-change []
+  (when (active-in-buf?)
+    (let [[old-start old-end] nvim.w.curlod-input-region
+          [start end] (smallest-first (region-start old-start) (region-end old-end))]
+      (when (or (not= old-start start) (not= old-end end))
+        (log.debug_ "New region:" [start end])
+        (set nvim.w.curlod-region [start end])))))
+
 (defn enable [start end]
-  (let [start (region-start start)
-        end (region-end end)
-        [start end] (if (< end start) [end start] [start end])]
-    (set nvim.w.curlod-active true)
-    (set nvim.w.curlod-region [start end])
+  (set nvim.w.curlod-active true)
+  (set nvim.w.curlod-input-region [start end])
+  (on-text-change)
 
-    (log.info_ "Locked cursor down between lines" start "and" end)
+  (let [[start end] nvim.w.curlod-region]
+    (log.info_ "Locked cursor down between lines" start "and" end))
 
-    (nvim.ex.augroup :curlod)
-    (nvim.ex.autocmd_)
-    (nvim.ex.autocmd
-      "CursorMoved,CursorMovedI" :<buffer>
-      (bridge.viml->lua :curlod.lockdown :on-cursor-move))
-    ;; TODO On buffer change, recalculate nvim.w.curlod-{start,end}
-    (nvim.ex.augroup :END)
-    ;; TODO Limit vim searches to Curlod region
-    ;; TODO Highlight lines outside of Curlod region
-    (on-cursor-move)
-    ))
+  (nvim.ex.augroup :curlod)
+  (nvim.ex.autocmd_)
+  (nvim.ex.autocmd
+    "CursorMoved,CursorMovedI" :<buffer>
+    (bridge.viml->lua :curlod.lockdown :on-cursor-move))
+  (nvim.ex.autocmd
+    "TextChanged,TextChangedI,TextChangedP" :<buffer>
+    (bridge.viml->lua :curlod.lockdown :on-text-change))
+  (nvim.ex.augroup :END)
+  ;; TODO Limit vim searches to Curlod region
+  ;; TODO Highlight lines outside of Curlod region
+  (on-cursor-move)
+  )
 
 (defn disable []
   (set nvim.w.curlod-active false)
