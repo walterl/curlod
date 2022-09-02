@@ -15,8 +15,8 @@ local bridge, nvim = autoload("curlod.bridge"), autoload("curlod.aniseed.nvim")
 do end (_2amodule_locals_2a)["bridge"] = bridge
 _2amodule_locals_2a["nvim"] = nvim
 local function init()
-  nvim.ex.command_(("-nargs=* " .. "CurlodEnable"), bridge["viml->lua"]("curlod.lockdown", "enable", {args = "<f-args>"}))
-  return nvim.ex.command_("CurlodDisable", bridge["viml->lua"]("curlod.lockdown", "disable"))
+  nvim.ex.command_("-nargs=*", "CurlodEnable", bridge["viml->lua"]("curlod.lockdown", "enable", {args = "<f-args>"}))
+  return nvim.ex.command_("-nargs=1", "CurlodLogLevel", bridge["viml->lua"]("curlod.log", "set-level", {args = "<f-args>"}))
 end
 _2amodule_2a["init"] = init
 return _2amodule_2a

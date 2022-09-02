@@ -4,8 +4,8 @@
 
 (defn init []
   (nvim.ex.command_
-    (.. "-nargs=* " "CurlodEnable")
+    "-nargs=*" "CurlodEnable"
     (bridge.viml->lua :curlod.lockdown :enable {:args :<f-args>}))
   (nvim.ex.command_
-    "CurlodDisable"
-    (bridge.viml->lua :curlod.lockdown :disable)))
+    "-nargs=1" "CurlodLogLevel"
+    (bridge.viml->lua :curlod.log :set-level {:args :<f-args>})))

@@ -11,10 +11,11 @@ do
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
 local autoload = (require("curlod.aniseed.autoload")).autoload
-local a, bridge, log, nvim = autoload("curlod.aniseed.core"), autoload("curlod.bridge"), autoload("curlod.log"), autoload("curlod.aniseed.nvim")
+local a, bridge, log, nu, nvim = autoload("curlod.aniseed.core"), autoload("curlod.bridge"), autoload("curlod.log"), autoload("curlod.aniseed.nvim.util"), autoload("curlod.aniseed.nvim")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["bridge"] = bridge
 _2amodule_locals_2a["log"] = log
+_2amodule_locals_2a["nu"] = nu
 _2amodule_locals_2a["nvim"] = nvim
 local function last_line_num()
   return nvim.buf_line_count(0)
@@ -145,14 +146,80 @@ local function enable(start, _end)
   nvim.ex.autocmd("CursorMoved,CursorMovedI", "<buffer>", bridge["viml->lua"]("curlod.lockdown", "on-cursor-move"))
   nvim.ex.autocmd("TextChanged,TextChangedI,TextChangedP", "<buffer>", bridge["viml->lua"]("curlod.lockdown", "on-text-change"))
   nvim.ex.augroup("END")
+  nvim.ex.command_("-buffer", "CurlodDisable", bridge["viml->lua"]("curlod.lockdown", "disable"))
+  nvim.ex.command_("-buffer", "CurlodSearchForward", bridge["viml->lua"]("curlod.lockdown", "region-search"))
+  nvim.ex.command_("-buffer", "CurlodSearchBack", bridge["viml->lua"]("curlod.lockdown", "region-search", {args = "N"}))
+  nvim.ex.nnoremap("<buffer>", "/", "/<C-r>=luaeval(\"require('curlod.lockdown')['region-search-pattern']()\")<CR>")
+  nvim.ex.nnoremap("<buffer>", "n", "<Cmd>CurlodSearchForward<CR>")
+  nvim.ex.nnoremap("<buffer>", "N", "<Cmd>CurlodSearchBack<CR>")
   return on_cursor_move()
 end
 _2amodule_2a["enable"] = enable
 local function disable()
   nvim.w["curlod-active"] = false
   nvim.w["curlod-region"] = nil
-  return nvim.ex.autocmd_("curlod")
+  nvim.ex.autocmd_("curlod")
+  nvim.ex.nunmap("<buffer>", "/")
+  nvim.ex.nunmap("<buffer>", "n")
+  return nvim.ex.nunmap("<buffer>", "N")
 end
 _2amodule_2a["disable"] = disable
---[[ (pattern? nil) (resolve-line-num nil) (enable 3 20) (enable 15 "/stop/") (enable "/on%-cursor%-move/" 80) ]]--
+local function region_search_pattern()
+  if active_in_buf_3f() then
+    local _let_17_ = nvim.w["curlod-region"]
+    local start = _let_17_[1]
+    local _end = _let_17_[2]
+    return ("\\%>" .. start .. "l" .. "\\%<" .. _end .. "l")
+  else
+    return nil
+  end
+end
+_2amodule_2a["region-search-pattern"] = region_search_pattern
+local function cursor_in_region_3f(_19_, _21_)
+  local _arg_20_ = _19_
+  local cur_line = _arg_20_[1]
+  local _ = _arg_20_[2]
+  local _arg_22_ = _21_
+  local start_line = _arg_22_[1]
+  local end_line = _arg_22_[2]
+  return (function(_23_,_24_,_25_) return (_23_ <= _24_) and (_24_ <= _25_) end)(start_line,cur_line,end_line)
+end
+_2amodule_locals_2a["cursor-in-region?"] = cursor_in_region_3f
+local function cursor_at_any_pos_3f(_26_, positions)
+  local _arg_27_ = _26_
+  local cur_line = _arg_27_[1]
+  local cur_col = _arg_27_[2]
+  local function _30_(_28_)
+    local _arg_29_ = _28_
+    local l = _arg_29_[1]
+    local c = _arg_29_[2]
+    return ((cur_line == l) and (cur_col == c))
+  end
+  return not a["nil?"](a.some(_30_, positions))
+end
+_2amodule_locals_2a["cursor-at-any-pos?"] = cursor_at_any_pos_3f
+local function region_search(next_cmd)
+  local next_cmd0 = (next_cmd or "n")
+  nvim.w["curlod-active"] = false
+  local orig_cursor_pos = nvim.win_get_cursor(0)
+  local seen_match_pos = {}
+  nu.normal(next_cmd0)
+  local cursor_pos = nvim.win_get_cursor(0)
+  log.debug_("cursor-pos:", cursor_pos)
+  while (not cursor_in_region_3f(cursor_pos, nvim.w["curlod-region"]) and not cursor_at_any_pos_3f(cursor_pos, seen_match_pos)) do
+    table.insert(seen_match_pos, cursor_pos)
+    nu.normal(next_cmd0)
+    cursor_pos = nvim.win_get_cursor(0)
+    log.debug_("cursor-pos:", cursor_pos)
+  end
+  if cursor_at_any_pos_3f(cursor_pos, seen_match_pos) then
+    log.error_("Pattern not found in Curlod range.")
+    nvim.win_set_cursor(0, orig_cursor_pos)
+  else
+  end
+  nvim.w["curlod-active"] = true
+  return nil
+end
+_2amodule_2a["region-search"] = region_search
+--[[ (log.set-level "debug") (log.set-level "info") (region-search-pattern) (pattern? nil) (resolve-line-num nil) (enable 3 20) (enable "/comment/") (enable 0 "/nvim/") ]]--
 return _2amodule_2a
