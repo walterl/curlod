@@ -8,7 +8,7 @@ working on one part, but needing to often refer to another.
 This will keep the cursor in the region starting at line 20, and ending at the
 first line that starts with `END`:
 
-```
+```vim
 :CurlodEnable 20 /^END/
 ```
 
@@ -17,7 +17,11 @@ Arguments are optional, and can be line numbers, or [Lua patterns](https://www.l
 
 The effect is limited to the active Neovim window.
 
-Free your cursor with `:CurlodDisable`.
+Free your cursor again:
+
+```vim
+:CurlodDisable
+```
 
 ## Installation
 Using [vim-plug](https://github.com/junegunn/vim-plug):
@@ -26,19 +30,34 @@ Using [vim-plug](https://github.com/junegunn/vim-plug):
 Plug 'walterl/curlod'
 ```
 
+## Development
+
+Curlod was developed with [Conjure](https://github.com/Olical/conjure) and [Aniseed](https://github.com/Olical/aniseed).
+
+### Change log level
+
+```vim
+:CurlodLogLevel debug
+```
+
+Or `info` (default) or `error`.
+
 ## TODO
 - [ ] Highlight lines outside of Curlod region
 
 ## Known limitations
 ### Out-of-region changes are still possible
-There are many ways to change text in Vim without moving the cursor.
+There are many ways to change text in Vim without moving the cursor. Curlod
+won't take on the Herculean task of trying to prevent that from happening
+outside of the Curlod region.
 
 This is considered out of scope for Curlod, since the primary motivation is to
-keep the cursor bound in order to limit a window's view on a buffer.
+keep the cursor bound to the specified region, in order to limit a window's
+view on a buffer.
 
-Attempts to prevent out-of-region edits are likely to degrade user experience
-with an explosion in corner cases caused by combinations of hard to predict
-effects.
+Attempts to prevent out-of-region edits are likely to degrade overall user
+experience with an explosion in corner cases caused by combinations of hard to
+predict effects.
 
 ## License
 [MIT](./LICENSE.md)
