@@ -20,11 +20,11 @@
     (s:sub 2 (a.dec (s:len)))))
 
 (defn- lookup-first-line [pat]
-  (var n 0)
+  (var i 0)
   (a.some (fn [line]
-            (set n (a.inc n))
+            (set i (a.inc i))
             (when (line:match (lua-pattern pat))
-              n))
+              i))
           (nvim.buf_get_lines 0 0 -1 false)))
 
 (defn- resolve-line-num [n]
@@ -40,8 +40,15 @@
           [cur-line cur-col] (nvim.win_get_cursor 0)]
       (log.debug_ ">>>" start end cur-line cur-col)
       (if
-        (< cur-line start) (nvim.win_set_cursor 0 [start cur-col])
-        (> cur-line end) (nvim.win_set_cursor 0 [end cur-col])))))
+        (< cur-line start)
+        (do
+          (log.info_ "Prevented cursor from leaving Curlod region")
+          (nvim.win_set_cursor 0 [start cur-col]))
+
+        (> cur-line end)
+        (do
+          (log.info_ "Prevented cursor from leaving Curlod region")
+          (nvim.win_set_cursor 0 [end cur-col]))))))
 
 (defn- region-start [start]
   (let [start (resolve-line-num start)]
