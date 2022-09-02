@@ -42,9 +42,6 @@ Curlod was developed with [Conjure](https://github.com/Olical/conjure) and [Anis
 
 Or `info` (default) or `error`.
 
-## TODO
-- [ ] Highlight lines outside of Curlod region
-
 ## Known limitations
 ### Out-of-region changes are still possible
 There are many ways to change text in Vim without moving the cursor. Curlod

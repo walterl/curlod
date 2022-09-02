@@ -111,18 +111,49 @@ local function smallest_first(a0, b)
   end
 end
 _2amodule_locals_2a["smallest-first"] = smallest_first
+local function set_highlighting_21(_12_)
+  local _arg_13_ = _12_
+  local start = _arg_13_[1]
+  local _end = _arg_13_[2]
+  nvim.ex.ownsyntax(nvim.b.current_syntax)
+  local before_end = ("/\\%" .. start .. "l/")
+  local after_start = ("/\\%>" .. _end .. "l/")
+  if (1 < start) then
+    nvim.ex.syntax("region", "CurlodOutsideRegionBefore", "start=/\\%^/ ", ("end=" .. before_end))
+    nvim.ex.highlight_("link", "CurlodOutsideRegionBefore", "Comment")
+  else
+  end
+  if (_end < last_line_num()) then
+    nvim.ex.syntax("region", "CurlodOutsideRegionAfter", ("start=" .. after_start), "end=/\\%$/")
+    return nvim.ex.highlight_("link", "CurlodOutsideRegionAfter", "Comment")
+  else
+    return nil
+  end
+end
+_2amodule_locals_2a["set-highlighting!"] = set_highlighting_21
+local function reset_highlighting_21()
+  nvim.ex.syntax("clear", "CurlodOutsideRegionBefore")
+  nvim.ex.highlight_("CurlodOutsideRegionBefore", "NONE")
+  nvim.ex.syntax("clear", "CurlodOutsideRegionAfter")
+  return nvim.ex.highlight_("CurlodOutsideRegionAfter", "NONE")
+end
+_2amodule_locals_2a["reset-highlighting!"] = reset_highlighting_21
+local function set_region_21(start, _end)
+  nvim.w["curlod-region"] = {start, _end}
+  return set_highlighting_21({start, _end})
+end
+_2amodule_2a["set-region!"] = set_region_21
 local function on_text_change()
   if active_in_buf_3f() then
-    local _let_12_ = nvim.w["curlod-input-region"]
-    local old_start = _let_12_[1]
-    local old_end = _let_12_[2]
-    local _let_13_ = smallest_first(region_start(old_start), region_end(old_end))
-    local start = _let_13_[1]
-    local _end = _let_13_[2]
+    local _let_16_ = nvim.w["curlod-input-region"]
+    local old_start = _let_16_[1]
+    local old_end = _let_16_[2]
+    local _let_17_ = smallest_first(region_start(old_start), region_end(old_end))
+    local start = _let_17_[1]
+    local _end = _let_17_[2]
     if ((old_start ~= start) or (old_end ~= _end)) then
       log.debug_("New region:", {start, _end})
-      nvim.w["curlod-region"] = {start, _end}
-      return nil
+      return set_region_21(start, _end)
     else
       return nil
     end
@@ -136,9 +167,9 @@ local function enable(start, _end)
   nvim.w["curlod-input-region"] = {start, _end}
   on_text_change()
   do
-    local _let_16_ = nvim.w["curlod-region"]
-    local start0 = _let_16_[1]
-    local _end0 = _let_16_[2]
+    local _let_20_ = nvim.w["curlod-region"]
+    local start0 = _let_20_[1]
+    local _end0 = _let_20_[2]
     log.info_("Locked cursor down between lines", start0, "and", _end0)
   end
   nvim.ex.augroup("curlod")
@@ -149,7 +180,6 @@ local function enable(start, _end)
   nvim.ex.command_("-buffer", "CurlodDisable", bridge["viml->lua"]("curlod.lockdown", "disable"))
   nvim.ex.command_("-buffer", "CurlodSearchForward", bridge["viml->lua"]("curlod.lockdown", "region-search"))
   nvim.ex.command_("-buffer", "CurlodSearchBack", bridge["viml->lua"]("curlod.lockdown", "region-search", {args = "N"}))
-  nvim.ex.nnoremap("<buffer>", "/", "/<C-r>=luaeval(\"require('curlod.lockdown')['region-search-pattern']()\")<CR>")
   nvim.ex.nnoremap("<buffer>", "n", "<Cmd>CurlodSearchForward<CR>")
   nvim.ex.nnoremap("<buffer>", "N", "<Cmd>CurlodSearchBack<CR>")
   return on_cursor_move()
@@ -159,43 +189,32 @@ local function disable()
   nvim.w["curlod-active"] = false
   nvim.w["curlod-region"] = nil
   nvim.ex.autocmd_("curlod")
-  nvim.ex.nunmap("<buffer>", "/")
   nvim.ex.nunmap("<buffer>", "n")
-  return nvim.ex.nunmap("<buffer>", "N")
+  nvim.ex.nunmap("<buffer>", "N")
+  return reset_highlighting_21()
 end
 _2amodule_2a["disable"] = disable
-local function region_search_pattern()
-  if active_in_buf_3f() then
-    local _let_17_ = nvim.w["curlod-region"]
-    local start = _let_17_[1]
-    local _end = _let_17_[2]
-    return ("\\%>" .. start .. "l" .. "\\%<" .. _end .. "l")
-  else
-    return nil
-  end
-end
-_2amodule_2a["region-search-pattern"] = region_search_pattern
-local function cursor_in_region_3f(_19_, _21_)
-  local _arg_20_ = _19_
-  local cur_line = _arg_20_[1]
-  local _ = _arg_20_[2]
+local function cursor_in_region_3f(_21_, _23_)
   local _arg_22_ = _21_
-  local start_line = _arg_22_[1]
-  local end_line = _arg_22_[2]
-  return (function(_23_,_24_,_25_) return (_23_ <= _24_) and (_24_ <= _25_) end)(start_line,cur_line,end_line)
+  local cur_line = _arg_22_[1]
+  local _ = _arg_22_[2]
+  local _arg_24_ = _23_
+  local start_line = _arg_24_[1]
+  local end_line = _arg_24_[2]
+  return (function(_25_,_26_,_27_) return (_25_ <= _26_) and (_26_ <= _27_) end)(start_line,cur_line,end_line)
 end
 _2amodule_locals_2a["cursor-in-region?"] = cursor_in_region_3f
-local function cursor_at_any_pos_3f(_26_, positions)
-  local _arg_27_ = _26_
-  local cur_line = _arg_27_[1]
-  local cur_col = _arg_27_[2]
-  local function _30_(_28_)
-    local _arg_29_ = _28_
-    local l = _arg_29_[1]
-    local c = _arg_29_[2]
+local function cursor_at_any_pos_3f(_28_, positions)
+  local _arg_29_ = _28_
+  local cur_line = _arg_29_[1]
+  local cur_col = _arg_29_[2]
+  local function _32_(_30_)
+    local _arg_31_ = _30_
+    local l = _arg_31_[1]
+    local c = _arg_31_[2]
     return ((cur_line == l) and (cur_col == c))
   end
-  return not a["nil?"](a.some(_30_, positions))
+  return not a["nil?"](a.some(_32_, positions))
 end
 _2amodule_locals_2a["cursor-at-any-pos?"] = cursor_at_any_pos_3f
 local function region_search(next_cmd)
@@ -221,5 +240,5 @@ local function region_search(next_cmd)
   return nil
 end
 _2amodule_2a["region-search"] = region_search
---[[ (log.set-level "debug") (log.set-level "info") (region-search-pattern) (pattern? nil) (resolve-line-num nil) (enable 3 20) (enable "/comment/") (enable 0 "/nvim/") ]]--
+--[[ (log.set-level "debug") (log.set-level "info") (pattern? nil) (resolve-line-num nil) (enable 3 20) (enable "/comment/") (enable 0 "/nvim/") ]]--
 return _2amodule_2a

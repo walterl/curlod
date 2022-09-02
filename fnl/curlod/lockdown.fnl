@@ -70,13 +70,34 @@
 (defn- smallest-first [a b]
   (if (< b a) [b a] [a b]))
 
+(defn- set-highlighting! [[start end]]
+  (nvim.ex.ownsyntax nvim.b.current_syntax)
+  (let [before-end (.. "/\\%" start "l/")
+        after-start (.. "/\\%>" end "l/")]
+    (when (< 1 start)
+      (nvim.ex.syntax :region :CurlodOutsideRegionBefore "start=/\\%^/ " (.. "end=" before-end))
+      (nvim.ex.highlight_ :link :CurlodOutsideRegionBefore :Comment))
+    (when (< end (last-line-num))
+      (nvim.ex.syntax :region :CurlodOutsideRegionAfter (.. "start=" after-start) "end=/\\%$/")
+      (nvim.ex.highlight_ :link :CurlodOutsideRegionAfter :Comment))))
+
+(defn- reset-highlighting! []
+  (nvim.ex.syntax :clear :CurlodOutsideRegionBefore)
+  (nvim.ex.highlight_ :CurlodOutsideRegionBefore :NONE)
+  (nvim.ex.syntax :clear :CurlodOutsideRegionAfter)
+  (nvim.ex.highlight_ :CurlodOutsideRegionAfter :NONE))
+
+(defn set-region! [start end]
+  (set nvim.w.curlod-region [start end])
+  (set-highlighting! [start end]))
+
 (defn on-text-change []
   (when (active-in-buf?)
     (let [[old-start old-end] nvim.w.curlod-input-region
           [start end] (smallest-first (region-start old-start) (region-end old-end))]
       (when (or (not= old-start start) (not= old-end end))
         (log.debug_ "New region:" [start end])
-        (set nvim.w.curlod-region [start end])))))
+        (set-region! start end)))))
 
 (defn enable [start end]
   (set nvim.w.curlod-active true)
@@ -121,7 +142,8 @@
   (set nvim.w.curlod-region nil)
   (nvim.ex.autocmd_ :curlod)
   (nvim.ex.nunmap :<buffer> :n)
-  (nvim.ex.nunmap :<buffer> :N))
+  (nvim.ex.nunmap :<buffer> :N)
+  (reset-highlighting!))
 
 (defn- cursor-in-region? [[cur-line _] [start-line end-line]]
   (<= start-line cur-line end-line))
