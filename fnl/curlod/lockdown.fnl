@@ -117,6 +117,9 @@
   (nvim.ex.autocmd
     "TextChanged,TextChangedI,TextChangedP" :<buffer>
     (bridge.viml->lua :curlod.lockdown :on-text-change))
+  (nvim.ex.autocmd
+    "WinClosed" :<buffer>
+    (bridge.viml->lua :curlod.lockdown :disable))
   (nvim.ex.augroup :END)
 
   ;; Commands
